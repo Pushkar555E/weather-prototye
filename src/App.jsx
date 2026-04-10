@@ -3,6 +3,7 @@ import { WeatherContext } from './context/WeatherContext';
 import Sidebar from './components/Sidebar';
 import MainDashboard from './components/MainDashboard';
 import HourlyForecast from './components/HourlyForecast';
+import DailyForecast from './components/DailyForecast';
 import HealthMetrics from './components/HealthMetrics';
 import WeatherMap from './components/WeatherMap';
 
@@ -36,6 +37,7 @@ function App() {
         <div className="w-full lg:w-2/3 xl:w-3/4 flex flex-col gap-6 animate-fadeUpDelayed">
           <MainDashboard />
           <HourlyForecast />
+          <DailyForecast />
           <HealthMetrics />
           <WeatherMap />
         </div>

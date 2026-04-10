@@ -8,6 +8,26 @@ const MainDashboard = () => {
 
   if (loading && !weatherData) return <Skeleton className="h-64" />;
 
+  const getOutfitSuggestion = () => {
+    if (!weatherData) return "";
+    const temp = weatherData.main.temp;
+    const isMetric = unit === 'metric';
+    const tempC = isMetric ? temp : (temp - 32) * 5/9;
+    const main = weatherData.weather[0].main.toLowerCase();
+
+    let suggestion = "";
+    if (tempC < 5) suggestion = "Heavy winter coat, gloves, and a scarf.";
+    else if (tempC < 15) suggestion = "A warm jacket or sweater.";
+    else if (tempC < 25) suggestion = "Light layers, like a t-shirt and a light jacket.";
+    else suggestion = "Breathable summer clothes, shorts, and sunglasses!";
+
+    if (main.includes('rain') || main.includes('drizzle')) suggestion += " Don't forget an umbrella! ☔";
+    else if (main.includes('snow')) suggestion += " Wear snow boots! ❄️";
+    else if (main.includes('clear') && tempC > 20) suggestion += " Don't forget sunscreen! ☀️";
+
+    return suggestion;
+  };
+
   return (
     <div className="glass-panel p-6 flex flex-col justify-between">
       <div className="flex justify-between items-center mb-6">
@@ -27,6 +47,16 @@ const MainDashboard = () => {
           </button>
         </div>
       </div>
+      
+      {weatherData && (
+        <div className="mb-6 bg-indigo-500/20 border border-indigo-400/30 rounded-xl p-3 flex items-center gap-3 animate-fadeUp">
+          <span className="text-2xl">🤖</span>
+          <div>
+            <div className="text-white/60 text-xs font-bold uppercase tracking-wider mb-0.5">Smart Suggestion</div>
+            <div className="text-sm font-medium">{getOutfitSuggestion()}</div>
+          </div>
+        </div>
+      )}
       
       <ExtraDetails />
     </div>

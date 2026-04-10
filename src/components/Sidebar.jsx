@@ -12,6 +12,8 @@ const Sidebar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [recentSearches, setRecentSearches] = useState(() => JSON.parse(localStorage.getItem('recentSearches')) || []);
+  const [debouncedInput, setDebouncedInput] = useState('');
   
   const dropdownRef = useRef(null);
   const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
@@ -32,36 +34,56 @@ const Sidebar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [dropdownRef]);
 
-  // Handle Input typing and fetching OpenWeatherMap Geocoding API
-  const handleInputChange = async (e) => {
-    const value = e.target.value;
-    setSearchInput(value);
-    
-    if (value.trim().length > 2) {
-      try {
-        const res = await axios.get(
-          `https://api.openweathermap.org/geo/1.0/direct?q=${value}&limit=5&appid=${API_KEY}`
-        );
-        const unique = res.data.reduce((acc, current) => {
-          const x = acc.find(item => item.name === current.name && item.state === current.state && item.country === current.country);
-          if (!x) return acc.concat([current]);
-          return acc;
-        }, []);
-        setSuggestions(unique);
-        setShowDropdown(true);
-      } catch (err) {
-        console.error("Failed to fetch autocomplete suggestions", err);
+  // Handle input explicitly
+  const handleInputChange = (e) => {
+    setSearchInput(e.target.value);
+  };
+
+  // Debounce the input for autocomplete
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedInput(searchInput);
+    }, 400); // 400ms debounce
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Fetch Autocomplete Search Suggestions via Geocoding API
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (debouncedInput.trim().length > 2) {
+        try {
+          const res = await axios.get(
+            `https://api.openweathermap.org/geo/1.0/direct?q=${debouncedInput}&limit=5&appid=${API_KEY}`
+          );
+          const unique = res.data.reduce((acc, current) => {
+            const x = acc.find(item => item.name === current.name && item.country === current.country);
+            if (!x) return acc.concat([current]);
+            return acc;
+          }, []);
+          setSuggestions(unique);
+          setShowDropdown(true);
+        } catch (err) {
+          console.error("Failed to fetch autocomplete suggestions", err);
+        }
+      } else {
+        setSuggestions([]);
+        setShowDropdown(false);
       }
-    } else {
-      setSuggestions([]);
-      setShowDropdown(false);
-    }
+    };
+    fetchSuggestions();
+  }, [debouncedInput, API_KEY]);
+
+  const addRecentSearch = (cityStr) => {
+    const updated = [cityStr, ...recentSearches.filter(c => c !== cityStr)].slice(0, 5); // Keep max 5
+    setRecentSearches(updated);
+    localStorage.setItem('recentSearches', JSON.stringify(updated));
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchInput.trim()) {
       fetchWeather(searchInput);
+      addRecentSearch(searchInput);
       setSearchInput('');
       setShowDropdown(false);
     }
@@ -82,6 +104,7 @@ const Sidebar = () => {
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript.replace('.', '');
       setSearchInput(transcript);
+      addRecentSearch(transcript);
       fetchWeather(transcript);
     };
     recognition.onend = () => setIsListening(false);
@@ -142,7 +165,16 @@ const Sidebar = () => {
               onClick={() => fetchWeather(fav)}
               className="text-xs font-bold px-3 py-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/20 hover:scale-105 transition-all whitespace-nowrap shadow-sm"
              >
-               {fav}
+               {fav} 🌟
+             </button>
+          ))}
+          {recentSearches.filter(r => !favorites.includes(r)).map(rs => (
+             <button 
+              key={rs} 
+              onClick={() => fetchWeather(rs)}
+              className="text-xs font-bold px-3 py-1.5 bg-white/5 border border-white/10 rounded-full hover:bg-white/20 hover:scale-105 transition-all whitespace-nowrap shadow-sm opacity-80"
+             >
+               {rs}
              </button>
           ))}
         </div>
@@ -154,7 +186,9 @@ const Sidebar = () => {
               <div 
                 key={idx}
                 onClick={() => {
-                  fetchWeather(`${item.name},${item.country}`);
+                  const locationStr = `${item.name},${item.country}`;
+                  fetchWeather(locationStr);
+                  addRecentSearch(locationStr);
                   setSearchInput('');
                   setShowDropdown(false);
                 }}
