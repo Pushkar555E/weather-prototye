@@ -43,7 +43,7 @@ const Sidebar = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedInput(searchInput);
-    }, 400); // 400ms debounce
+    }, 150); // 150ms debounce
     return () => clearTimeout(timer);
   }, [searchInput]);
 

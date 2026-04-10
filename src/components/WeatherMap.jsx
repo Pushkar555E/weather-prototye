@@ -23,7 +23,7 @@ const WeatherMap = () => {
         <iframe 
           width="100%" 
           height="100%" 
-          src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=${tempUnit}&metricWind=${windUnit}&zoom=5&overlay=wind&product=ecmwf&level=surface&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}`}
+          src={`https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=${tempUnit}&metricWind=${windUnit}&zoom=5&overlay=wind&product=ecmwf&level=surface&lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&marker=true`}
           frameBorder="0"
           className="absolute inset-0 saturate-150 contrast-125 hover:brightness-110 transition-all duration-700"
         ></iframe>
